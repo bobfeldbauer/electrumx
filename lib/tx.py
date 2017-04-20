@@ -45,6 +45,14 @@ class Tx(namedtuple("Tx", "version inputs outputs locktime")):
     # FIXME: add hash as a cached property?
 
 
+class TxPos(namedtuple("Tx", "version time inputs outputs locktime")):
+    '''Class representing a transaction.'''
+
+    @cachedproperty
+    def is_coinbase(self):
+        return self.inputs[0].is_coinbase
+
+
 class TxInput(namedtuple("TxInput", "prev_hash prev_idx script sequence")):
     '''Class representing a transaction input.'''
 
@@ -302,3 +310,15 @@ class DeserializerZcash(Deserializer):
                 self.cursor += 32 # joinSplitPubKey
                 self.cursor += 64 # joinSplitSig
         return base_tx, double_sha256(self.binary[start:self.cursor])
+
+
+class DeserializerPos(Deserializer):
+    def read_tx(self):
+        start = self.cursor
+        return TxPos(
+            self._read_le_int32(),  # version
+            self._read_le_uint32(), # time
+            self._read_inputs(),    # inputs
+            self._read_outputs(),   # outputs
+            self._read_le_uint32()  # locktime
+        ), double_sha256(self.binary[start:self.cursor])

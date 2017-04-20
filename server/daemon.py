@@ -147,16 +147,18 @@ class Daemon(util.LoggedClass):
     async def _send_single(self, method, params=None):
         '''Send a single request to the daemon.'''
         def processor(result):
-            err = result['error']
-            if not err:
+            if 'result' in result:
                 return result['result']
+            err = result['error']
             if err.get('code') == self.WARMING_UP:
                 raise self.DaemonWarmingUpError
             raise DaemonError(err)
 
-        payload = {'method': method}
+        payload = {'id': 'electrumx', 'method': method}
         if params:
             payload['params'] = params
+        else:
+            payload['params'] = ''
         return await self._send(payload, processor)
 
     async def _send_vector(self, method, params_iterable, replace_errs=False):
@@ -166,14 +168,14 @@ class Daemon(util.LoggedClass):
         If replace_errs is true, any item with an error is returned as None,
         otherwise an exception is raised.'''
         def processor(result):
-            errs = [item['error'] for item in result if item['error']]
+            errs = [item['error'] for item in result if 'error' in item]
             if any(err.get('code') == self.WARMING_UP for err in errs):
                 raise self.DaemonWarmingUpError
             if not errs or replace_errs:
                 return [item['result'] for item in result]
             raise DaemonError(errs)
 
-        payload = [{'method': method, 'params': p} for p in params_iterable]
+        payload = [{'id': 'electrumx', 'method': method, 'params': p} for p in params_iterable]
         if payload:
             return await self._send(payload, processor)
         return []

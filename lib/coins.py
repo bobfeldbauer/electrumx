@@ -39,7 +39,7 @@ from hashlib import sha256
 import lib.util as util
 from lib.hash import Base58, hash160, double_sha256, hash_to_str
 from lib.script import ScriptPubKey
-from lib.tx import Deserializer, DeserializerSegWit, DeserializerAuxPow, DeserializerZcash
+from lib.tx import Deserializer, DeserializerSegWit, DeserializerAuxPow, DeserializerZcash, DeserializerPos
 
 Block = namedtuple("Block", "header transactions")
 
@@ -814,3 +814,37 @@ class Einsteinium(Coin):
     IRC_PREFIX = "E_"
     IRC_CHANNEL = "#electrum-emc2"
     RPC_PORT = 41879
+
+class Vcash(Coin):
+    NAME = "Vcash"
+    SHORTNAME = "XVC"
+    NET = "mainnet"
+    XPUB_VERBYTES = bytes.fromhex("0488b21e")
+    XPRV_VERBYTES = bytes.fromhex("0488ade4")
+    P2PKH_VERBYTE = bytes.fromhex("47")
+    P2SH_VERBYTE = bytes.fromhex("08")
+    WIF_BYTE = bytes.fromhex("80")
+    GENESIS_HASH = ('15e96604fbcf7cd7e93d072a06f07ccf'
+                    'e1f8fd0099270a075c761c447403a783')
+    IRC_PREFIX = "E_"
+    IRC_CHANNEL = "#electrum-xvc"
+    RPC_PORT = 9195
+    TX_COUNT = 1207218
+    TX_COUNT_HEIGHT = 637842
+    TX_PER_BLOCK = 2
+    PEER_DEFAULT_PORTS = {'t': '50001', 's': '50002'}
+
+    @classmethod
+    def header_hash(cls, header):
+        '''Given a header return the hash.'''
+        import vcash_hash
+        version, = struct.unpack('<I', header[:4])
+        timestamp, bits, nonce = struct.unpack('<III', header[68:80])
+        if version < 5:
+            return vcash_hash.getWhirlpoolxPoWHash(header)
+        else:
+            return vcash_hash.getBlakePoWHash(header)
+
+    @classmethod
+    def deserializer(cls):
+        return DeserializerPos
