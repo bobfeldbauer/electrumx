@@ -29,8 +29,8 @@ SUPPRESS_MESSAGES = [
 
 def main_loop():
     '''Start the server.'''
-    if sys.version_info < (3, 5, 3):
-        raise RuntimeError('Python >= 3.5.3 is required to run ElectrumX')
+    if sys.version_info < (3, 5, 2):
+        raise RuntimeError('Python >= 3.5.2 is required to run ElectrumX')
 
     if os.geteuid() == 0:
         raise RuntimeError('DO NOT RUN AS ROOT! Create an unpriveleged user '
